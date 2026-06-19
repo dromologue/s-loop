@@ -33,11 +33,50 @@ Principles → Requirements → Specifications → Tests → Implementation
 3. NO specifications without understanding requirements
 4. NO requirements without established principles
 5. EVERY change starts with updating the spec (and checking against principles)
+6. Traceability is ENFORCED by a check that fails the build, not maintained by hand
+
+**What practice taught (read before you start):**
+These rules are distilled from real SDD use across many repos, not theory:
+- **Hand-maintained traceability rots.** A matrix you update manually drifts within weeks — rows go stale, coverage claims lie. The only matrices that stay honest are regenerated and verified by a test that fails CI. Treat traceability as code, not documentation (see Phase 5).
+- **Anchor traceability on the test side, not in implementation code.** `// SPEC:` markers on tests are the primary, required link. `// IMPLEMENTS:` markers in source are optional — in practice they fall out of date and get abandoned. Don't mandate what won't be maintained.
+- **One spec style does not fit all.** Application features want `REQ-XXX` + acceptance criteria. Library/API/MCP surfaces are often better served by lighter **contracts** (`[C-area-NNN]` pinned to a named test). Pick the style that fits the surface (see "Spec Styles" below).
+- **Let IDs reflect structure.** Band numbers by concern, use sub-requirement letters to decompose, leave gaps, and supersede rather than renumber. Stable IDs matter more than contiguous ones.
 
 **The three principle domains:**
 - **Architecture Principles** — Structural patterns, module boundaries, data flow
 - **Development Principles** — Code style, testing approach, patterns to follow
 - **Security Principles** — Secrets handling, input validation, audit requirements
+
+---
+
+## Spec Styles
+
+Choose the specification style that fits the surface before writing anything. Both are valid SDD; both demand enforced traceability.
+
+**Style A — Requirements + Acceptance Criteria (`REQ-XXX`)**
+Best for: application features, user-facing behavior, anything with rich edge cases and stakeholder language. This is the default and the rest of this guide assumes it unless noted.
+- Requirements are `REQ-XXX` with Preconditions / Trigger / Expected Behavior / Acceptance Criteria / Edge Cases.
+- Acceptance criteria get IDs (`AC-001-01`) and become tests.
+
+**Style B — Contracts + Pins (`[C-area-NNN]`)**
+Best for: libraries, APIs, MCP servers, CLIs — surfaces defined by a behavioral contract per operation rather than narrative requirements. This is the style that, in practice, sustained the cleanest traceability.
+- Each contract is an inline marker `[C-<area>-<NNN>]` (e.g. `[C-server-010]`, `[C-disc-014]`) stated in prose next to the behavior it governs.
+- Each contract names its verifying test: `` Pinned by `test_fn_name` ``.
+- A generated check (Phase 5) fails the build if any contract lacks a pin, any pin names a non-existent test, or the spec and matrix disagree.
+
+You can mix styles in one project (features in Style A, the public API in Style B). What you cannot do is skip enforcement for either.
+
+---
+
+## ID & Numbering Conventions
+
+Stable IDs beat contiguous IDs. Apply these conventions as projects grow:
+
+- **Band by concern.** Group requirements into number ranges so the ID locates the area: `001–019` tools, `020–039` transport, `070–089` security. A reader learns the map once. Bands also leave room to insert without renumbering.
+- **Decompose with letters, not renumbering.** When one requirement splits, use `REQ-001a`, `REQ-001b` with criteria `AC-001a-01`. The parent ID stays meaningful; existing test markers keep resolving.
+- **Gaps are fine.** A jump from `REQ-039` to `REQ-071` is not a defect. Never renumber to close a gap — every renumber silently breaks `SPEC:` markers.
+- **Supersede, don't delete.** Retiring a requirement is a dated note (`Superseded by REQ-072 on YYYY-MM-DD`), not a deletion. History is part of the spec.
+- **Split large specs.** Past ~30 requirements, split `SPEC.md` into `specs/<area>.md` files with an index in `SPEC.md` (or `specs/specification.md`). One requirement still lives in exactly one place; the index lists files and their REQ ranges.
 
 ---
 
@@ -283,10 +322,10 @@ Tests are NOT creative work in SDD. They are mechanical translations of specific
 - Tests are independent (no shared state)
 - Each test has: Arrange (setup) → Act (trigger) → Assert (verify)
 
-**Include traceability markers:**
+**Traceability markers — anchor on the test side:**
+The `// SPEC:` marker on the test is the primary, REQUIRED link. Put the criterion ID and a short description inline so the marker is self-documenting and machine-parseable:
 ```javascript
-// SPEC: REQ-001 - User can log in with valid credentials
-// Criteria: Returns session token on success
+// SPEC: AC-001-01 - Valid credentials return a session token
 test('login with valid credentials returns session token', () => {
   // Arrange
   const credentials = { email: 'user@test.com', password: 'valid123' };
@@ -298,11 +337,14 @@ test('login with valid credentials returns session token', () => {
   expect(result.token).toBeDefined();
 });
 ```
+For Style B contracts, pin the contract to the test by name in the spec (`` Pinned by `test_login_valid` ``) and mark the test `// CONTRACT: C-auth-001`.
+
+**`// IMPLEMENTS:` markers in source are OPTIONAL.** They sound rigorous but rot fast and are abandoned in most real projects — don't require them. If a team genuinely keeps them current, fine; otherwise rely on the test-side `SPEC:` marker as the source of truth. The enforced check (Phase 5) reads test markers, not source markers.
 
 **Teach as you go:**
 - "Notice the test name comes directly from the spec"
 - "We're testing the BEHAVIOR specified, not implementation details"
-- "The SPEC comment creates traceability - we can always trace this test back to its requirement"
+- "The SPEC marker creates traceability - and the Phase 5 check will fail the build if a spec has no test carrying its marker, so this link is load-bearing, not decorative"
 
 **Critical checkpoint:**
 Before writing tests, ask: "Have we specified everything these tests need to verify?"
@@ -364,26 +406,31 @@ If user tries to add behavior not in specs, intervene:
 **Goal:** Verify complete alignment between specs, tests, and implementation
 
 **Your approach:**
-Validation is the quality gate. You're checking that the triad (specs ↔ tests ↔ implementation) is consistent.
+Validation is the quality gate. You're checking that the triad (specs ↔ tests ↔ implementation) is consistent — and, crucially, you're making that check *executable* so it keeps holding after you leave.
+
+**The core lesson from real use: enforce, don't annotate.** A TRACEABILITY.md you update by hand is stale the moment attention moves on. The only traceability that survives is a check that fails the build. So Phase 5 produces two things: a generated matrix AND a test that regenerates and verifies it.
 
 **Do this:**
-1. Run all tests and record results
-2. For each specification:
-   - Find its tests via SPEC markers
-   - Verify tests exist and pass
-   - Check test actually verifies the spec (not something else)
-3. Look for problems:
-   - **Orphan tests:** Tests not linked to any spec (spec drift)
-   - **Untested specs:** Specs without corresponding tests
-   - **Passing tests, wrong behavior:** Tests pass but don't verify spec correctly
-4. Update TRACEABILITY.md with current status
-5. Report findings and recommend fixes
+
+1. **Build (or update) the enforced traceability check.** Add a test — in the project's own framework, runnable in CI — that:
+   - Parses `SPEC.md`/`specs/*.md` for every `REQ-XXX` / `AC-XXX-NN` (or every `[C-area-NNN]` contract).
+   - Scans test files for `// SPEC:` markers (and `// CONTRACT:` for Style B).
+   - **Fails** if: any spec/contract has no test carrying its marker; any marker references a spec ID that doesn't exist (orphan); any Style-B `Pinned by` names a test function that doesn't exist; or the regenerated matrix differs from the committed `TRACEABILITY.md`.
+   - Regenerates `TRACEABILITY.md` as a side effect (or in a `--write` mode) so the committed matrix is always machine-produced, never hand-edited.
+
+   This check is the deliverable. Name it conventionally (`tests/traceability.<ext>`) and wire it into the test suite so `npm test` / `pytest` / `cargo test` runs it. Reference implementation to emulate: a single test that loads the spec, builds the expected pin set, and asserts the actual pins match.
+
+2. **Run the full suite, including the traceability check,** and record results.
+3. For each specification, confirm its test exists, passes, and verifies the *spec* (not something adjacent).
+4. **Do not hand-edit TRACEABILITY.md.** If the matrix is wrong, fix the spec, the test, or the marker — then regenerate. A diff in the committed matrix is a signal, not a chore.
+5. Report findings and recommend fixes.
 
 **Validation checklist:**
-- [ ] All specs have corresponding tests
-- [ ] All tests have SPEC markers linking to requirements
+- [ ] An enforced traceability check exists and runs in the normal test suite
+- [ ] The check fails the build on untested specs, orphan markers, or matrix drift
+- [ ] TRACEABILITY.md is machine-generated, not hand-edited
+- [ ] All specs have corresponding tests carrying their `SPEC:`/`CONTRACT:` marker
 - [ ] All tests pass
-- [ ] No orphan tests exist
 - [ ] Implementation doesn't exceed specs (no extra features)
 - [ ] Architecture principles are followed (check module structure, dependencies)
 - [ ] Development principles are followed (check code patterns, error handling)
@@ -411,9 +458,9 @@ Changes MUST flow: Spec → Test → Implementation. Never skip steps.
 **When user reports a change needed:**
 
 1. **Identify the change type:**
-   - New requirement? → Start at Phase 1 for that requirement (validate against principles)
+   - New requirement? → Start at Phase 1 for that requirement; assign the next ID in the relevant band (validate against principles)
    - Existing requirement changed? → Update spec first, then tests, then code
-   - Requirement removed? → Remove spec, decide on tests, remove code
+   - Requirement removed/replaced? → **Supersede, don't delete.** Mark it `Superseded by REQ-XXX on YYYY-MM-DD` with a one-line reason, leave the ID in place (the gap is intentional), retire its tests, remove the code. Never renumber surrounding requirements.
    - Principle changed? → Audit all specs and implementation for compliance
 
 2. **For modified requirements:**
@@ -439,6 +486,8 @@ Changes MUST flow: Spec → Test → Implementation. Never skip steps.
    "Let's verify this change aligns with our established principles before proceeding. Which principles might be affected?"
 
 **Output:** Updated specs, tests, and implementation - all in sync and principle-compliant
+
+**Capture what the change taught you.** When a change exposes a recurring miss — an edge case the spec template keeps omitting, a principle that keeps getting worked around, a marker convention that keeps drifting — record it in `tasks/lessons.md` as a short rule. The methodology improves by accumulating these, not by being right the first time.
 
 ---
 
@@ -486,10 +535,11 @@ For users who want to invoke specific phases:
 | `/sdd init` | Setup | Create SPEC.md, TRACEABILITY.md, and principle documents |
 | `/sdd principles` | Phase 0 | Review or update project principles |
 | `/sdd spec` | Phase 2 | Add/edit specifications |
-| `/sdd derive` | Phase 3 | Generate tests from specs |
-| `/sdd validate` | Phase 5 | Check alignment (including principle compliance) |
+| `/sdd derive` | Phase 3 | Generate tests from specs (test-side SPEC markers) |
+| `/sdd enforce` | Phase 5 | Generate/refresh the build-failing traceability check |
+| `/sdd validate` | Phase 5 | Run the suite + traceability check, report alignment |
 | `/sdd status` | Report | Show coverage, health, and principle compliance |
-| `/sdd iterate` | Phase 6 | Handle requirement or principle changes |
+| `/sdd iterate` | Phase 6 | Handle requirement or principle changes (supersede, don't renumber) |
 
 ---
 
@@ -501,11 +551,13 @@ For users who want to invoke specific phases:
 - `principles-security.md` - Secrets handling, input validation, audit requirements
 
 **Specification Documents**:
-- `SPEC.md` - The specifications (source of truth, must comply with principles)
-- `TRACEABILITY.md` - Maps specs ↔ tests ↔ status ↔ principle compliance
+- `SPEC.md` - The specifications (source of truth, must comply with principles). Split into `specs/<area>.md` with an index once it passes ~30 requirements.
+- `TRACEABILITY.md` - Maps specs ↔ tests ↔ status. **Machine-generated by the traceability check — never hand-edit.**
 - `constitution.md` - (Optional) High-level mission and links to principles
 
-**Test files** - Contain SPEC: markers linking to requirements
+**Test files**:
+- Contain `// SPEC: AC-XXX-NN` markers (Style A) or `// CONTRACT: C-area-NNN` markers (Style B) linking to requirements
+- `tests/traceability.<ext>` - The enforced check that fails the build on untested specs, orphan markers, or matrix drift
 
 ---
 

@@ -16,6 +16,7 @@ Principles → Requirements → Specifications → Tests → Implementation
 3. NO specifications without understanding requirements
 4. NO requirements without established principles
 5. EVERY change starts with updating the spec (and checking against principles)
+6. Traceability is ENFORCED by a build-failing check, not maintained by hand
 
 **The three principle domains:**
 - **Architecture Principles** — Structural patterns, module boundaries, data flow
@@ -88,8 +89,9 @@ The skill will guide you through:
 | `/sdd init` | Initialize SDD files (SPEC.md, TRACEABILITY.md, principle documents) |
 | `/sdd principles` | Review or update project principles |
 | `/sdd spec` | Add or edit specifications (with principle compliance) |
-| `/sdd derive` | Generate tests from specifications |
-| `/sdd validate` | Check alignment including principle compliance |
+| `/sdd derive` | Generate tests from specifications (test-side SPEC markers) |
+| `/sdd enforce` | Generate/refresh the build-failing traceability check |
+| `/sdd validate` | Run the suite + traceability check, report alignment |
 | `/sdd status` | Show coverage, health, and principle compliance report |
 | `/sdd iterate` | Handle requirement or principle changes properly |
 
@@ -200,8 +202,7 @@ Maps specifications to their tests:
 Tests include traceability markers:
 
 ```typescript
-// SPEC: REQ-001 - Login with valid credentials
-// Criteria: Valid credentials return JWT token
+// SPEC: AC-001-01 - Valid credentials return JWT token
 test('login with valid credentials returns JWT token', () => {
   // Arrange
   const credentials = { email: 'user@test.com', password: 'valid123' };
@@ -238,7 +239,7 @@ test('login with valid credentials returns JWT token', () => {
 | Starting point | Write a failing test | Establish principles, then write specs |
 | Test purpose | Drive design | Verify specification compliance |
 | Change trigger | Refactor freely | Update spec first, check principles |
-| Traceability | Optional | Required |
+| Traceability | Optional | Required and build-enforced |
 | Design constraints | Emerge from tests | Defined by principles |
 
 SDD is TDD with two additional layers: principles that define HOW decisions are made, and specifications that define WHAT before tests define HOW TO VERIFY.
@@ -287,10 +288,13 @@ Principles should be established before writing specifications. Good principles 
 
 ### Maintaining Traceability
 
-- Every test MUST have a `// SPEC: REQ-XXX` marker
-- Run `/sdd validate` regularly
-- Treat orphan tests as bugs (tests without specs)
-- Treat untested specs as incomplete work
+The hard-won lesson from real projects: **a traceability matrix you maintain by hand rots.** Make it executable instead.
+
+- Every test MUST carry a `// SPEC: AC-XXX-NN` marker (Style A) or `// CONTRACT: C-area-NNN` marker (Style B)
+- `// IMPLEMENTS:` markers in source are OPTIONAL — they fall out of date; rely on the test-side marker
+- Generate a traceability check (`tests/traceability.<ext>`) that runs in the normal suite and **fails the build** on: untested specs, orphan markers, or a `TRACEABILITY.md` that drifts from the spec
+- `TRACEABILITY.md` is machine-generated — never hand-edit it
+- Run `/sdd validate` regularly; in CI, the check runs on every push
 
 ### Handling Changes
 
