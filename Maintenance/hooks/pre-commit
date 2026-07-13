@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#
+# S-Loop pre-commit hook.
+# On every commit, checks whether the canonical S-Loop definition in Workflowy
+# has changed; if so, re-extracts the snapshot, redrafts docs/S-LOOP-CANONICAL.md,
+# and stages the updates into this commit. Never blocks: offline or a missing
+# `claude` CLI degrades to a no-op. Skip with SLOOP_SKIP_CANONICAL_CHECK=1.
+#
+set -uo pipefail
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+"$REPO_ROOT/Maintenance/sync-canonical.sh" hook || true
+exit 0

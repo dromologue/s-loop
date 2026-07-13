@@ -1,30 +1,37 @@
 # S-Loop — a Specification-Driven Development Coach for Claude Code
 
-S-Loop is a Claude Code skill that guides you through the complete specification-driven development workflow—from requirements gathering through implementation and validation. The name is the shape of the method: a spec loop that runs Principles → Spec → Clarify → Plan → Tests → Implementation → Validation and back around on every change.
+S-Loop is a Claude Code skill that coaches a specification-driven development workflow **inside the canonical S-Loop** — the four-step build loop **Scope → Scaffold → Specify → Ship (SSSS)**, run once per change and closed so that shipping opens the next change. The authoritative definition of the loop is in [`Maintenance/S-LOOP-CANONICAL.md`](./Maintenance/S-LOOP-CANONICAL.md); this skill is the coach that runs a spec-driven workflow within it.
 
 ## What is S-Loop?
 
-S-Loop is a disciplined approach to software development where **specifications are the single source of truth**, guided by **established principles**. Everything flows from principles through specs:
+S-Loop is a disciplined build loop where **specifications are the single source of truth** and the running system is a projection you regenerate. It belongs to the spec-driven development (SDD) family and adds two departures that define the method:
 
 ```
-Principles → Requirements → Specification (WHAT) → Clarify → Plan (HOW) → Tests → Implementation
+        Scope ──► Scaffold ──► Specify ──► Ship ──┐
+     bound a bet   oracle       executable   release,│
+     (kill cond.)  before the   intent bound take the│
+                   behaviour    to checks    verdict │
+        └──────  verdict becomes the next change ────┘
 ```
+
+1. **The oracle comes first.** The executable checks — fitness functions, the eval harness, the build-failing traceability check — are stood up in **Scaffold, before the behavioural spec is written**. A check that cannot fail is not a check.
+2. **The primitives run in every step, not as a pipeline.** Framing, specifying, designing, decomposing, building and checking happen throughout; what changes step to step is the *proportion* (the weighting table in the canonical doc).
 
 **The core discipline:**
-1. NO code without tests
-2. NO tests without specifications
-3. NO specifications without understanding requirements
-4. NO requirements without established principles
-5. The specification says WHAT and WHY; the plan says HOW — keep them in separate documents
-6. EVERY change starts with updating the spec (as a delta, checked against principles)
-7. Traceability is ENFORCED by a build-failing check, not maintained by hand
+1. The specification is the source of truth; the system is a projection regenerated from it
+2. The oracle before the behaviour — Scaffold stands up the checks before Specify writes the detail
+3. Scope is a **bet with a kill condition**, not a contract — success is a *settled* bet, which may mean abandoning the change
+4. Every step ends in an artefact and passes a machine-checkable gate; never advance past a failing gate
+5. Ship closes the loop — release, read the verdict from real signal, file the instrumented skill; the verdict becomes the next Scope
+6. Traceability is ENFORCED by a build-failing check (Scaffold's fitness function), not maintained by hand
+7. One change per turn
 
-**The three principle domains** (together, the project's **constitution**):
+**The three principle domains** (together, the project's **constitution**, and Scope's standing input):
 - **Architecture Principles** — Structural patterns, module boundaries, data flow
 - **Development Principles** — Code style, testing approach, patterns to follow
 - **Security Principles** — Secrets handling, input validation, audit requirements
 
-This skill acts as your S-Loop coach, guiding you through each phase and enforcing the methodology — while **scaling the ceremony to your team's maturity** (see The Maturity Dial below).
+This skill acts as your S-Loop coach, guiding you through the four steps and enforcing the method — while **scaling the ceremony to your team's maturity** (see The Maturity Dial below).
 
 ## The Maturity Dial
 
@@ -36,7 +43,7 @@ The same rigour that steadies a junior team slows a senior one into resentment. 
 | **Standard** | Most teams and features (the default) | Principles → Spec → Clarify (recommended) → Plan → Tests → Implementation → Validation. Traceability always enforced; checklist optional. |
 | **Lean** | Senior teams, brownfield 1→n, small well-understood deltas | Actions, not phases: spec-delta → tests → implement → validate, in any order. Clarify and a separate plan doc optional; the coach gets out of the way. |
 
-Two rules hold in **every** tier: the build-failing traceability check is never skipped, and a change always starts by touching the spec, never the code.
+Three rules hold in **every** tier: the build-failing traceability check (Scaffold's oracle) is never skipped and never stood up after the behaviour; a change always starts by touching the spec (the Scope bet / a delta), never the code; and no step advances past a failing gate.
 
 ## Installation
 
@@ -60,17 +67,29 @@ mkdir -p ~/.claude/skills/s-loop/templates
 mkdir -p ~/.claude/skills/s-loop/examples
 ```
 
-2. Copy these files:
+2. Copy the skill files (everything except `Maintenance/`):
 ```
 ~/.claude/skills/s-loop/
-├── SKILL.md                    # Main skill file
-├── README.md                   # This guide
+├── SKILL.md                          # Main skill file
+├── README.md                         # This guide
+├── LICENSE
 ├── templates/
-│   ├── spec-template.md        # SPEC.md template
-│   └── traceability.md         # TRACEABILITY.md template
+│   ├── spec-template.md              # SPEC.md template
+│   ├── plan-template.md              # plan.md template (Scaffold)
+│   ├── checklist-template.md         # requirements checklist
+│   ├── traceability.md               # TRACEABILITY.md template
+│   ├── principles-architecture.md    # constitution: architecture
+│   ├── principles-development.md     # constitution: development
+│   └── principles-security.md        # constitution: security
 └── examples/
-    └── sample-spec.md          # Example specifications
+    └── sample-spec.md                # Example specifications
 ```
+
+> **`Maintenance/` is not part of the installed skill.** It holds the apparatus that
+> keeps the canonical S-Loop definition in sync and versioned (the generated
+> `S-LOOP-CANONICAL.md`, the snapshot, the sync script, and the pre-commit hook). A
+> user of the skill never needs it; see [`Maintenance/README.md`](./Maintenance/README.md).
+> The Quick Install above copies it harmlessly; the manual install omits it.
 
 ### Verify Installation
 
@@ -86,34 +105,46 @@ Simply invoke the skill with your feature description:
 /s-loop user authentication with email and password
 ```
 
-The skill will guide you through (at the tier that fits your team — see The Maturity Dial):
-0. **Principles & Constitution** — Setting up or reviewing the governing principles
-1. **Requirements Discovery** — Understanding what you want to build (validated against principles)
-2. **Specification (WHAT)** — Creating precise, testable, technology-independent specs
-3. **Clarify** — Asking up to 5 targeted questions to close ambiguity *before* planning
-4. **Plan (HOW)** — The technical approach and stack, with a constitution-check gate
-5. **Test Derivation** — Generating tests from specs
-6. **Implementation** — Writing code to pass tests (following the plan and principles)
-7. **Validation** — Enforced traceability + advisory cross-artifact analysis + optional checklists
-8. **Iteration** — Handling changes as deltas (ADDED/MODIFIED/REMOVED) against living truth
+The skill will guide you through the four steps (at the tier that fits your team — see The Maturity Dial). Each step is a different mix of the SDD primitives (the inner phases):
+
+**SCOPE** — bound the change as a falsifiable bet
+- *Principles & Constitution* (Phase 0) — the standing policy Scope inherits
+- *Requirements as a bet* (Phase 1) — problem, in/out boundary, success **and kill** conditions, constraints
+
+**SCAFFOLD** — stand up the structure and the oracle *before* the detail
+- *Plan / Design* (Phase 4) — architecture, named interfaces, technology (the HOW), constitution-checked
+- *Stand up the oracle* — the build-failing traceability check / fitness harness, green on the skeleton and red on a seeded violation
+
+**SPECIFY** — declare executable intent, bound to the standing checks
+- *Specification* (Phase 2) — precise, testable, technology-independent (EARS where conditional)
+- *Clarify* (Phase 3) — up to 5 targeted questions, answers written back into the spec
+- *Bind tests & decompose* (Phase 5) — each criterion mapped to a check the harness already runs
+
+**SHIP** — implement, validate, release, take the verdict, close the loop
+- *Implementation* (Phase 6) — generate against the spec, following the plan
+- *Validation* (Phase 7) — run the harness; advisory analysis + optional checklist
+- *Release & Iteration* (Phase 8) — settle the bet on real signal, file the instrumented skill, record the verdict as the next delta
 
 ### Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `/s-loop` | Start workflow (at the chosen tier) or assess current state |
-| `/s-loop init` | Initialize S-Loop files (SPEC.md, TRACEABILITY.md, plan.md, constitution documents) |
-| `/s-loop principles` | Review or amend the constitution (versioned) |
-| `/s-loop spec` | Add or edit specifications (WHAT only, technology-independent) |
-| `/s-loop clarify` | Ask ≤5 targeted questions and write answers back into the spec |
-| `/s-loop plan` | Create the technical plan (HOW) with a constitution-check gate |
-| `/s-loop derive` | Generate tests from specifications (test-side SPEC markers) |
-| `/s-loop enforce` | Generate/refresh the build-failing traceability check |
-| `/s-loop analyze` | Advisory cross-artifact consistency & coverage report (writes nothing) |
-| `/s-loop checklist` | Generate a "unit tests for the requirements" quality checklist |
-| `/s-loop validate` | Run the suite + traceability check, report alignment |
-| `/s-loop status` | Show coverage, health, tier, and principle compliance |
-| `/s-loop iterate` | Handle a change as a delta (supersede, don't renumber) |
+| Command | Step | Description |
+|---------|------|-------------|
+| `/s-loop` | — | Start the loop (at the chosen tier) or assess current state |
+| `/s-loop init` | — | Initialize S-Loop files (SPEC.md, TRACEABILITY.md, plan.md, constitution documents) |
+| `/s-loop principles` | Scope | Review or amend the constitution (versioned) |
+| `/s-loop scope` | Scope | Frame the change as a bet — boundary, success + kill conditions |
+| `/s-loop scaffold` | Scaffold | Stand up the plan/skeleton and the oracle (harness first) |
+| `/s-loop plan` | Scaffold | Create the technical plan (HOW) with a constitution-check gate |
+| `/s-loop enforce` | Scaffold | Generate/refresh the build-failing traceability check |
+| `/s-loop spec` · `specify` | Specify | Add or edit specifications (WHAT only, technology-independent) |
+| `/s-loop clarify` | Specify | Ask ≤5 targeted questions and write answers back into the spec |
+| `/s-loop derive` | Specify | Generate tests bound to the standing checks (test-side SPEC markers) |
+| `/s-loop analyze` | Ship | Advisory cross-artifact consistency & coverage report (writes nothing) |
+| `/s-loop checklist` | Ship | Generate a "unit tests for the requirements" quality checklist |
+| `/s-loop validate` | Ship | Run the suite + traceability check, report alignment |
+| `/s-loop ship` | Ship | Release, record the verdict, draft the delta that re-opens Scope |
+| `/s-loop iterate` | Ship | Handle a change as a delta (supersede, don't renumber) |
+| `/s-loop status` | — | Show coverage, health, tier, principle compliance, and current step |
 
 ### Typical Workflow
 
@@ -254,19 +285,22 @@ test('login with valid credentials returns JWT token', () => {
 
 ### How It Differs from TDD
 
+TDD is red-green at unit level *inside* implementation. S-Loop's oracle-first move is broader: architectural fitness functions and an evaluation harness stood up in **Scaffold**, before the behavioural spec, spanning the whole change — and the non-deterministic model output a unit test cannot judge.
+
 | Aspect | TDD | S-Loop |
 |--------|-----|-----|
-| Starting point | Write a failing test | Establish principles, then write specs |
-| Test purpose | Drive design | Verify specification compliance |
-| Change trigger | Refactor freely | Update spec first, check principles |
+| Starting point | Write a failing test | Bound a bet (Scope), then stand up the oracle (Scaffold) |
+| Scope of checks | Unit level, inside implementation | Architectural fitness functions + eval harness, whole change |
+| Order | Test then code, per unit | Oracle before *any* behavioural spec |
+| Change trigger | Refactor freely | Update spec first (a delta), check principles |
 | Traceability | Optional | Required and build-enforced |
-| Design constraints | Emerge from tests | Defined by principles |
+| The close | — | Release → verdict → next Scope; the loop is turned again |
 
-S-Loop is TDD with two additional layers: principles that define HOW decisions are made, and specifications that define WHAT before tests define HOW TO VERIFY.
+### How It Relates to the SDD field (spec-kit, OpenSpec, Kiro, Tessl)
 
-### How It Relates to spec-kit and OpenSpec
+The canonical S-Loop assumes the spec-driven development field rather than reinventing it: **GitHub Spec Kit** runs constitution/specify/plan/tasks/implement as commands; **AWS Kiro** splits the work across `requirements.md`/`design.md`/`tasks.md` with EARS criteria; **Tessl** treats the spec as the maintained artefact and regenerates code from it. If you run any of these well, you already have most of the value. What SSSS adds are its **two departures** — the oracle stood up *before* the behavioural spec (Scaffold before Specify), and the primitives running in every step in shifting proportion rather than as a gated pipeline — plus a **close** that emits a governed, instrumented skill so the spec cannot silently drift.
 
-Two well-known open-source spec-driven development toolkits sit at opposite ends of a ceremony spectrum, and — usefully — they map onto team maturity:
+For change management and ceremony, this skill draws on two toolkits that sit at opposite ends of the spectrum and map onto team maturity:
 
 | | **GitHub spec-kit** | **OpenSpec** | **This skill** |
 |---|---|---|---|

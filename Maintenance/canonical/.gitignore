@@ -1,0 +1,2 @@
+# Transient fetch buffers written by scripts/sync-canonical.sh
+.fetch.*
