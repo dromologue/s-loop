@@ -1,8 +1,11 @@
 # Specifications
 
-> This file is the single source of truth for this project.
-> All tests and implementation derive from these specifications.
-> Changes flow: Principles → Spec → Tests → Implementation
+> This file is the single source of truth for this project — the **WHAT and WHY**.
+> It is technology-independent: no framework, library, database, or language choices
+> belong here. Those live in the **plan** (`plan.md`, the HOW). A well-written spec
+> could be implemented in two different stacks without changing a word.
+> All tests derive from these specifications.
+> Changes flow: Principles → Spec (WHAT) → Clarify → Plan (HOW) → Tests → Implementation
 
 ## Metadata
 
@@ -10,8 +13,9 @@
 - **Created:** [DATE]
 - **Test Framework:** [FRAMEWORK]
 - **Last Updated:** [DATE]
-- **SDD Version:** 1.2
+- **S-Loop Version:** 2.0
 - **Spec Style:** A (REQ + acceptance criteria) | B (contracts + pins)
+- **Tier:** Guided | Standard | Lean
 
 ## Governing Principles
 
@@ -56,6 +60,18 @@ Describe the behavior from the user's perspective.]
 **Acceptance Criteria:**
 - [ ] **AC-001-01** [Testable criterion 1 - specific, measurable]
 - [ ] **AC-001-02** [Testable criterion 2 - can be verified by code]
+
+> For conditional/stateful behavior, prefer a **Given/When/Then scenario** — it
+> removes ambiguity and maps one-to-one onto a test's Arrange/Act/Assert:
+>
+> - [ ] **AC-001-03** [Scenario name]
+>   - GIVEN [precondition / starting state]
+>   - WHEN [the trigger action]
+>   - THEN [the observable outcome]
+>   - AND [any additional outcome]
+>
+> Keep plain one-line criteria for simple facts; use scenarios where a reader could
+> otherwise disagree about the behavior.
 
 **Edge Cases:**
 - [Edge case 1]: [Expected behavior for this case]
@@ -122,6 +138,30 @@ The enforced check fails the build if a contract has no pin, a pin names a
 missing test, or the matrix drifts.
 
 === END STYLE B ===
+-->
+
+<!--
+=== DELTA / CHANGE-PROPOSAL TEMPLATE (Phase 8: Iteration) ===
+
+The spec is living truth. Express a change as a delta against it, review the delta,
+then merge it back so this file always describes the system as it is now. Use only
+the sections that apply.
+
+## ADDED Requirements
+### REQ-045: [New requirement]
+[Full requirement with acceptance criteria / scenarios. Takes the next banded ID.]
+
+## MODIFIED Requirements
+### REQ-002: [Requirement being changed]
+[The new behavior, edited in place.]
+(Previously: [old behavior] — changed YYYY-MM-DD, reason: [why].)
+
+## REMOVED Requirements
+### REQ-018: [Requirement being retired]
+Superseded by REQ-045 on YYYY-MM-DD. Removal rationale: [why].
+(Leave the ID and the gap in place — never renumber. Retire its tests, remove the code.)
+
+=== END DELTA TEMPLATE ===
 -->
 
 ---

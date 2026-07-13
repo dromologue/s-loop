@@ -5,6 +5,10 @@
 > (`tests/traceability.<ext>`), which fails the build if this matrix drifts
 > from the spec, a spec has no test marker, or a marker references a missing spec.
 > To change it, change the spec/test/marker and regenerate.
+>
+> This is the **enforced** layer — it blocks the build. It is distinct from the
+> **advisory** cross-artifact analysis (`/s-loop analyze`), which reports coverage
+> gaps, ambiguity, and constitution drift but writes nothing and blocks nothing.
 
 ## Summary
 
@@ -57,4 +61,4 @@ Style B links by `Pinned by test_fn` in the spec + CONTRACT: marker on the test.
 
 | Date | Change | By |
 |------|--------|-----|
-| [DATE] | Initialized traceability matrix | /sdd init |
+| [DATE] | Initialized traceability matrix | /s-loop init |

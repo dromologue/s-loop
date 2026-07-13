@@ -7,7 +7,7 @@
 - **Created:** 2024-01-15
 - **Test Framework:** Jest
 - **Last Updated:** 2024-01-15
-- **SDD Version:** 1.2
+- **S-Loop Version:** 2.0
 - **Spec Style:** A (REQ + acceptance criteria)
 
 > Each acceptance criterion carries a stable ID (`AC-XXX-NN`). Tests reference it
