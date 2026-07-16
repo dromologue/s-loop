@@ -82,6 +82,7 @@ mkdir -p ~/.claude/skills/s-loop/examples
 │   ├── principles-development.md     # constitution: development
 │   └── principles-security.md        # constitution: security
 └── examples/
+    ├── worked-example-photo-app.md   # One full turn of the loop, start to finish
     └── sample-spec.md                # Example specifications
 ```
 
@@ -96,6 +97,12 @@ mkdir -p ~/.claude/skills/s-loop/examples
 Start Claude Code and type `/s-loop`. You should see the S-Loop workflow begin.
 
 ## Usage
+
+> **New to S-Loop? Start with the worked example.**
+> [`examples/worked-example-photo-app.md`](./examples/worked-example-photo-app.md)
+> runs one complete turn of the loop on a small photo-sharing app: what you type, what
+> lands on disk, which gate has to pass, and why each step is there at all. Read it once
+> before your first real turn.
 
 ### Starting a New Feature
 
