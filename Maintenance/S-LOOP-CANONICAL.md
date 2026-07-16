@@ -21,9 +21,19 @@ The S-Loop (SSSS) is a build loop — **Scope, Scaffold, Specify, Ship** — run
 per change and *closed*, so that shipping starts the next turn rather than ending
 the line. It sits in the **spec-driven development (SDD)** family, where a
 versioned specification is the source of truth and the running code is a
-projection you regenerate, not the asset you hand-edit. It is Dromologue's build
-process at **Level 4 (Construction) of the IOTA stack**, but you need none of that
-framework to use it.
+projection you regenerate, not the asset you hand-edit. It maps onto the wider
+Dromologue framework — it is that framework's build process at **Level 4
+(Construction)** — but you need none of that to use it. What follows is
+deliberately concrete, and it assumes you have already sat through a spec-first
+pitch and want to know what is actually different.
+
+The same loop runs at **two nested levels**. The **programme loop** turns over a
+use case or application; each turn ships a change and updates the **nine
+disciplines** of the operating model, which is how the model is discovered rather
+than designed. Inside it, **each skill runs its own loop**: any requirement a turn
+exposes sends that skill back through Scope, Scaffold, Specify, Ship. A skill is a
+living artefact on its own loop, not a one-pass build, and it runs the identical
+method, reused from the `s-loop` skill rather than restated.
 
 ## 2. The baseline: what spec-driven development already gives you
 
@@ -66,10 +76,11 @@ work than a five-stage relay, and it is what makes SSSS a loop of four mixed ste
 rather than an assembly line.
 
 **The close.** Ship does not end the line; it emits a **governed, instrumented
-skill** — the spec bound to its harness, prompts, guardrails and policy shape — and
-feeds the result back as the next change. The SDD movement's own admitted failure
-is that specifications drift and go ungoverned. A closed loop whose output is a
-skill carrying a live eval harness is the governance the tools have not yet
+skill** — its SDD flow (spec, plan, traceability) bound to its evals, cost profile,
+guardrails, observability, and a manifest carrying its contract clause — and feeds
+the result back as the next change. The SDD movement's own admitted failure is that
+specifications drift and go ungoverned. A closed loop whose output is a governed
+skill bundle with a live eval harness is the governance the tools have not yet
 supplied.
 
 ## 4. How the SDD primitives distribute across the four steps
@@ -166,9 +177,10 @@ the next change. A release with no readable verdict is not a Ship, it is an esca
 > running system into divergence from it. Do not pass a failing gate. Every step
 > ends in an artefact, not a conversation.
 
-**Invariant.** The skill leaving Ship carries **spec, harness, prompts, guardrails
-and policy shape together**. Miss one and you shipped code, not capability, and the
-loop has not closed.
+**Invariant.** The skill leaving Ship is a **complete bundle**: its SDD flow (spec,
+plan, traceability), its evals, cost profile, guardrails and observability, and a
+manifest carrying its contract clause. Miss any and you shipped code, not
+capability, and the loop has not closed.
 
 | Step | INPUT | PRODUCE | GATE | STOP if |
 |------|-------|---------|------|---------|

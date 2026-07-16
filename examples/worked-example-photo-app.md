@@ -349,9 +349,11 @@ is next turn's bet, not this one's scope creep.
    attempts, upload successes, p95 upload-to-visible, share of active users who
    uploaded. These are not general dashboards, they are the specific instruments the
    bet named in Step 1.
-2. **File the instrumented skill.** What leaves the loop is the spec bound to its
-   harness, its prompts, its guardrails and its policy shape — together. Miss one and
-   you shipped code, not capability, and the loop has not closed.
+2. **File the instrumented skill as a complete bundle.** What leaves the loop is
+   Frame's SDD flow (the spec, the plan, the traceability matrix) bound to its evals,
+   its cost profile (the £0.02 per active user per month the bet inherited), its
+   guardrails, its observability, and a manifest carrying its contract clause. Miss
+   any and you shipped code, not capability, and the loop has not closed.
 3. **Read the verdict.** Two weeks later: 34% of active users uploaded, p95 is 6.1
    seconds. The bet is **partially settled**. Uptake passes; latency misses the
    success condition without hitting the kill condition. The instruments say the

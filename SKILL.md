@@ -32,9 +32,18 @@ projection you regenerate, not the asset you hand-edit.
    └───────────────  verdict becomes the next change  ───────────────┘
 ```
 
-**Loop invariant.** The skill leaving Ship carries **spec, harness, prompts,
-guardrails and policy shape together**. Miss one and you shipped code, not
+**Loop invariant.** The skill leaving Ship is a **complete bundle**: its SDD flow
+(spec, plan, traceability), its evals, cost profile, guardrails and observability,
+and a manifest carrying its contract clause. Miss any and you shipped code, not
 capability, and the loop has not closed.
+
+**The same loop runs at two nested levels.** The **programme loop** turns over a use
+case or application; each turn ships a change and updates the **nine disciplines** of
+the operating model, which is how the model is discovered rather than designed.
+Inside it, **each skill runs its own loop**: any requirement a turn exposes sends that
+skill back through Scope, Scaffold, Specify, Ship. A skill is a living artefact on its
+own loop, not a one-pass build, and it runs the identical method — reused from this
+skill, never restated.
 
 **Two departures from linear SDD — hold these as the point of the method:**
 1. **The oracle comes first.** The executable checks (fitness functions,
@@ -466,9 +475,10 @@ layer catches what a machine can't yet enforce.
 
 1. **Release** the change and instrument it so the Scope bet can be settled against
    **real signal** (telemetry, evals, the golden cases in production).
-2. **File the instrumented skill** — the spec bound to its harness, prompts,
-   guardrails and policy shape — so what leaves the loop is reusable capability, not
-   just a running change.
+2. **File the instrumented skill** as a complete bundle — its SDD flow (spec, plan,
+   traceability) bound to its evals, cost profile, guardrails and observability, and a
+   manifest carrying its contract clause — so what leaves the loop is reusable
+   capability, not just a running change.
 3. **Record the verdict as the next change.** Draft the delta (ADDED / MODIFIED /
    REMOVED), merge it back into the living spec, and **capture what the change taught**
    in `tasks/lessons.md` when it exposes a recurring miss.
